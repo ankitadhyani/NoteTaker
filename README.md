@@ -24,6 +24,8 @@ This is a note-taking application built with Node, Express, and MySQL.
 
 
 ## Screenshots
-![alt text](https://github.com/ankitadhyani/liri-node-app/blob/master/snapshots/1_StartApp.png "Note Taker: Main Page")
+![alt text](https://github.com/ankitadhyani/NoteTaker/blob/master/snapshots/NoteTaker_HomePage.png "Note Taker: Home Page")
 
-![alt text](https://github.com/ankitadhyani/liri-node-app/blob/master/snapshots/2_Concert.png "Note Taker: Notes")
+![alt text](https://github.com/ankitadhyani/NoteTaker/blob/master/snapshots/NoteTaker_NewNote.png "Note Taker: New Note")
+
+![alt text](https://github.com/ankitadhyani/NoteTaker/blob/master/snapshots/NoteTaker_ViewEditNote.png "Note Taker: View Edit Note")
