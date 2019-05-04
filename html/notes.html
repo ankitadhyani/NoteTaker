@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Courgette" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Rancho" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Pacifico" rel="stylesheet">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+    <style>
+        h1, h4 {
+            font-family: 'Courgette', cursive;
+        }
+        #title-input {
+            font-family: 'Pacifico', cursive;
+        }
+        #body-input {
+            font-family: 'Rancho', cursive;
+        }
+    </style>
+
+
+    <title>My Notes</title>
+</head>
+
+<body class="bg-info text-light">
+
+    <!-- ---------------------------------------- HEADER ------------------------------------------------- -->
+
+    <header class="container-fluid mt-5">
+        <div class="row">
+
+            <div class="col-10"><h1><strong>Note - Taker</strong></h1></div>
+
+            <!-- Delete selected note -->
+            <div class="col-1" id="deleteNote" data-toggle="tooltip" data-placement="top" title="Delete Note">
+                <button type="button" class="btn btn-lg btn-info">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+
+            <!-- Create new note -->
+            <div class="col-1" id="createNewNote" data-toggle="tooltip" data-placement="top" title="Create Note">
+                <button type="button" class="btn btn-lg btn-info" >
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+            
+        </div>
+    </header>
+
+    <!-- <hr class="my-3"> -->
+    <!-- ---------------------------------------- BODY ------------------------------------------------- -->
+
+    <main class="container-fluid mt-5">
+       
+        <div class="row">
+
+            <!-- View all notes -->
+            <div class="col-4">
+                
+                <div class="card" style="height:420px;">
+
+                    <h4 class="card-header text-dark" style="background-color: rgb(191, 240, 241)">
+                        <strong>My Notes</strong>
+                    </h4>
+
+                    <ul class="list-group list-group-flush text-dark" style="height:420px; overflow-y: scroll;">
+                        <!-- Notes will be listed here -->
+                    </ul>
+
+                </div> 
+            </div>
+            <!-- End of notes card -->
+
+
+            <!-- Add note/New Note form -->
+            <div class="col-8">
+                <div class="card setHeight">
+                    <div class="card-body">
+                        <form class="form-group" id="notes-form">
+            
+                            <input id="title-input" class="border border-info form-control p-5" placeholder="Note Title" type="text" maxlength="30" style="font-size: 3rem;"></input>
+            
+                            <textarea id="body-input" class="border border-info p-5 mt-2" placeholder="Note Text" style="height: 200px; font-size: 2rem; width: 100%;"></textarea>
+            
+                            <button type="submit" class="btn btn-block btn-info p-3 mt-2 float-right">
+                                <i class="fas fa-save"></i>  Save To Notes
+                            </button>
+
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <!-- End of note/New Note form -->
+
+        </div>
+
+    </main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+
+
+<script>
+
+$(document).ready(function() {
+
+
+    //Variable that stores previously selected note Id
+    let previousNoteId = "0";
+
+    /************************************************************************************************
+    * OnSubmit event listner that triggers when user submits the form to save the note
+    ************************************************************************************************/
+
+    $("#notes-form").on("submit", function(event) {
+
+        event.preventDefault();
+
+        // package up data from input tags
+        const notesData = {
+            title: $("#title-input").val().trim(),
+            body: $("#body-input").val().trim(),
+        }
+
+        // check if any of these inputs are empty and return false 
+        if (!notesData.title || !notesData.body) {
+            return false;
+        }
+
+
+        //Get id linked to delete button (0 => in case of new note, any other => existing note)
+        const keyIdInDeleteBtn = $("#deleteNote").attr("keyId");
+
+
+        //Case where New note is submitted
+        if(keyIdInDeleteBtn === "0") {
+
+            console.log("New Note Submitted");
+
+            // POST data using ajax
+            $.ajax({
+                url: "/api/notes",
+                method: "POST",
+                data: notesData // this is req.body
+            })
+            .then(function(apiResponse) {
+                console.log("Inside .then of POST: /api/notes");
+                console.log(apiResponse);
+
+                // Reload the page to get the updated list
+                location.reload();
+
+            });
+
+        }
+        //Case where already created note is edited and then submitted again
+        else {
+
+            console.log("Note Editted at id=" + keyIdInDeleteBtn);
+
+            // PUT data using ajax
+            $.ajax({
+                url: "/api/notes/"+keyIdInDeleteBtn,
+                method: "PUT",
+                data: notesData // this is req.body
+            })
+            .then(function(apiResponse) {
+                console.log("Inside .then of PUT: /api/notes/:"+keyIdInDeleteBtn);
+                console.log(apiResponse);
+
+                // Reload the page to get the updated list
+                location.reload();
+
+            });
+        }
+
+    });          
+
+
+
+    /************************************************************************************************
+    * OnClick event listner that triggers when user selects a particular note from the Notes list
+    ************************************************************************************************/
+
+    $("ul").on("click", ".my-notes", function() {
+
+        //Get note id of the note that was selected by the user
+        let noteId = $(this).attr("keyId");
+        //console.log("currentNoteId: " + noteId + " :: " + "previousNoteId: " + previousNoteId);
+
+        //Reset color classes of previously selected note
+        if(previousNoteId !== "0" && previousNoteId !== noteId) {
+            //Remove classes before appending new classes
+            $(`#${previousNoteId}`).removeClass("bg-info text-light");
+            $(`#${previousNoteId}`).addClass("bg-white text-dark");
+        }
+
+        //Remove classes before appending new classes
+        $(this).removeClass("bg-white text-dark");
+        $(this).addClass("bg-info text-light");
+
+        //Store the current note id to be used as previously selected note id for later use if different
+        if(previousNoteId !== noteId) {
+            previousNoteId = noteId;
+        }
+
+        //Add title and body to form title and text area to view/edit the note
+        $("#title-input").attr("value", $(this).attr("keyTitle"));
+        $("#body-input").text($(this).attr("keyText"));
+
+
+        //Link currently selected note Id to the delete button so that in case user wants to delete the note then user will be able to use this id to delete the note from DB
+        $("#deleteNote").attr("keyId", $(this).attr("keyId"));
+
+        //Make delete button visible when user selects a note from the note list
+        $("#deleteNote").removeClass("invisible");
+
+    });
+
+
+
+    /************************************************************************************************
+    * OnClick event listner that triggers when user selects the delete button to delete the current note
+    ************************************************************************************************/
+
+    $("#deleteNote").on("click", function() { 
+
+        console.log("Delete button clicked");
+
+        //Get note id of the note that was selected by the user
+        let noteId = $(this).attr("keyId");
+
+        // Send the DELETE request.
+        $.ajax("/api/notes/" + noteId, {
+            type: "DELETE"
+        })
+        .then(function(apiResponse) {
+            console.log("Inside .then of DELETE: /api/notes/"+noteId);
+            console.log(apiResponse);
+
+            // Reload the page to get the updated list
+            location.reload();
+
+        });
+
+    });
+
+
+    /************************************************************************************************
+    * OnClick event listner that triggers when user selects a particular note from the Notes list
+    ************************************************************************************************/
+
+
+    $("#createNewNote").on("click", function() { 
+
+        console.log("Create New Note button clicked");
+
+        //Clear title and body of the form to add new note data
+        $("#title-input").attr("value", "");
+        $("#body-input").text("");
+
+        //Set default value = 0 to keyId of  "deleteNote" button signifying new note
+        $("#deleteNote").attr("keyId", "0");
+
+        //Make delete button visibility to "invisible" by default
+        $("#deleteNote").addClass("invisible");
+
+    });
+
+
+    //Make delete button visibility to "invisible" by default
+    $("#deleteNote").addClass("invisible");
+
+
+    // perform GET request for all notes data
+    $.ajax({
+        url: "/api/notes",
+        method: "GET"
+    })
+    .then(function (notesData) {
+
+        console.log("Inside .then of GET: /api/notes");
+        notesData.forEach(showNotes);
+
+    });
+
+    function showNotes(notes) {
+
+        //console.log("\nNote info:: " + notes.id + " : " + notes.title);
+
+        // create a list item using jQuery
+        let $li = $("<li>");
+        $li
+            .addClass("list-group-item list-group-item-action flex-column align-items-start")
+            .addClass("border border-info border-top-1")
+            .addClass("my-notes") //User defined class
+            .attr("id", notes.id) //User defined id
+            .attr("keyId", notes.id)
+            .attr("keyTitle", notes.title)
+            .attr("keyText", notes.body);
+
+        $div = $("<div>");
+        $div
+            .addClass("d-flex w-100 justify-content-between")
+            .appendTo($li);
+
+        $("<h5>")
+            .addClass("mb-1")
+            .text(notes.title)
+            .appendTo($div);
+
+        $("<small>")
+            .text(notes.created_at)
+            .appendTo($div);
+
+        $subdiv = $("<div>");
+        $subdiv
+            .addClass("d-flex w-100 justify-content-between")
+            .appendTo($li);
+
+        $("<small>")
+            .text(notes.body.substring(0, 10) + "...")
+            .appendTo($subdiv);
+
+        $("ul").append($li);
+
+
+        //Set default value = 0 to keyId of  "deleteNote" button signifying new note
+        $("#deleteNote").attr("keyId", "0");
+
+    } //End of showNotes(notes)
+
+
+}); //End of document.ready
+
+
+
+</script>
+
+</body>
+</html>
